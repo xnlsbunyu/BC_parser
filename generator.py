@@ -47,7 +47,7 @@ lintag1_re = re.compile('\D*?(.ACC|T.CC|TA.C|TAC.)\D{4,7}?AA\D{4,7}?TT\D{4,7}?TT
 lintag2_re = re.compile('\D*?(.ACC|T.CC|TA.C|TAC.)\D{4,7}?AA\D{4,7}?AA\D{4,7}?TT\D{4,7}?(.TAC|T.AC|TT.C|TTA.)\D*')
 lintag1_f_clipper = re.compile('(.ACC|T.CC|TA.C|TAC.)')
 lintag2_f_clipper = re.compile('(.ACC|T.CC|TA.C|TAC.)')
-lintag1_r_clipper = re.compile('(.TAC|T.AC|TT.C|TTA.)')
+lintag1_r_clipper = re.compile('(.TAA|A.AA|AT.A|ATA.)')
 lintag2_r_clipper = re.compile('(.TAC|T.AC|TT.C|TTA.)')
 
 #define some boundaries
@@ -56,7 +56,7 @@ f_multitag_pos = 8
 f_barcode_pos = 59
 r_multitag_pos = 8
 r_barcode_pos = 45
-barcode_length = 38
+barcode_length = 34
 
 # Minimum quality score
 min_qs = 30
@@ -92,7 +92,7 @@ for f_record, r_record in zip(f_file, r_file):
                 r_grep = v[1].match(rr[r_multitag_pos:])
                 if f_grep is not None and r_grep is not None:
                     bar_pattern_quality_multitag_counts += 1
-
+                    
                     vars()[multitag_dict[k] + '_lintag1'].write(lintag1_grep.group() + '\n')
                     vars()[multitag_dict[k] + '_lintag2'].write(lintag2_grep.group() + '\n')
                     vars()[multitag_dict[k] + '_multitag'].write(f_grep.group() +  r_grep.group() + '\n')
