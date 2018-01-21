@@ -45,10 +45,10 @@ for i in multitag:
 #r_multitag = mismatch_re(multitag[6:], 1)
 lintag1_re = re.compile('\D*?(.ACC|T.CC|TA.C|TAC.)\D{4,7}?AA\D{4,7}?TT\D{4,7}?TT\D{4,7}?(.TAA|A.AA|AT.A|ATA.)\D*')
 lintag2_re = re.compile('\D*?(.ACC|T.CC|TA.C|TAC.)\D{4,7}?AA\D{4,7}?AA\D{4,7}?TT\D{4,7}?(.TAC|T.AC|TT.C|TTA.)\D*')
-lintag1_f_clipper = re.compile('(.ACC|T.CC|TA.C|TAC.)')
-lintag2_f_clipper = re.compile('(.ACC|T.CC|TA.C|TAC.)')
-lintag1_r_clipper = re.compile('(.TAA|A.AA|AT.A|ATA.)')
-lintag2_r_clipper = re.compile('(.TAC|T.AC|TT.C|TTA.)')
+lintag1_f_clipper = re.compile('\D*?(.ACC|T.CC|TA.C|TAC.)')
+lintag2_f_clipper = re.compile('\D*?(.ACC|T.CC|TA.C|TAC.)')
+lintag1_r_clipper = re.compile('\D*?(AAT.|AA.A|A.TA|.ATA)')
+lintag2_r_clipper = re.compile('\D*?(CAT.|CA.T|C.TT|.ATT)')
 
 #define some boundaries
 seqtag_pos = 0
@@ -92,14 +92,32 @@ for f_record, r_record in zip(f_file, r_file):
                 r_grep = v[1].match(rr[r_multitag_pos:])
                 if f_grep is not None and r_grep is not None:
                     bar_pattern_quality_multitag_counts += 1
-                    
-                    vars()[multitag_dict[k] + '_lintag1'].write(lintag1_grep.group() + '\n')
-                    vars()[multitag_dict[k] + '_lintag2'].write(lintag2_grep.group() + '\n')
-                    vars()[multitag_dict[k] + '_multitag'].write(f_grep.group() +  r_grep.group() + '\n')
-                    vars()[multitag_dict[k] + '_lintag1_umi'].write(lintag1_grep.group() + "," + fr[0:f_multitag_pos] + rr[0:r_multitag_pos] + '\n')
-                    vars()[multitag_dict[k] + '_lintag2_umi'].write(lintag1_grep.group() + "," + fr[0:f_multitag_pos] + rr[0:r_multitag_pos] + '\n')
-                    vars()[multitag_dict[k] + '_seqtag'].write(fr[0:f_multitag_pos] + rr[0:r_multitag_pos] + '\n')
-                    break
+                    # remove the common sequences before and after the actual barcodes and write into files
+                    raw_barcode_1 = lintag1_grep.group()
+                    raw_barcode_2 = lintag2_grep.group()
+                    lintag1_start = lintag1_f_clipper.match(raw_barcode_1)
+                    lintag1_end = lintag1_r_clipper.search(raw_barcode_1[::-1])
+#                    lintag1_end = -lintag1_r_clipper.search(raw_barcode_1[::-1]).end() + 1
+                    lintag2_start = lintag2_f_clipper.match(raw_barcode_2)
+                    lintag2_end = lintag2_r_clipper.search(raw_barcode_2[::-1])
+                    if lintag1_start is not None and lintag1_end is not None and lintag2_start is not None and lintag2_end is not None:
+                        lintag1_start_pos = lintag1_start.end()
+                        lintag1_end_pos = -lintag1_end.end()
+                        lintag2_start_pos = lintag2_start.end()
+                        lintag2_end_pos = -lintag2_end.end()
+#                    lintag2_end = -lintag2_r_clipper.search(raw_barcode_2[::-1]).end() + 1
+                        trimmed_lintag1 = raw_barcode_1[lintag1_start_pos:lintag1_end_pos]
+                        trimmed_lintag2 = raw_barcode_2[lintag2_start_pos:lintag2_end_pos]
+                        vars()[multitag_dict[k] + '_lintag1'].write(trimmed_lintag1 + '\n')
+                        vars()[multitag_dict[k] + '_lintag2'].write(trimmed_lintag2 + '\n')
+                        vars()[multitag_dict[k] + '_multitag'].write(f_grep.group() +  r_grep.group() + '\n')
+                        vars()[multitag_dict[k] + '_lintag1_umi'].write(lintag1_grep.group() + "," + fr[0:f_multitag_pos] + rr[0:r_multitag_pos] + '\n')
+                        vars()[multitag_dict[k] + '_lintag2_umi'].write(lintag1_grep.group() + "," + fr[0:f_multitag_pos] + rr[0:r_multitag_pos] + '\n')
+                        vars()[multitag_dict[k] + '_seqtag'].write(fr[0:f_multitag_pos] + rr[0:r_multitag_pos] + '\n')
+                        break
+                    else:
+                        print (raw_barcode_1, raw_barcode_2)
+                        break
         else:
             bar_pattern_non_quality_counts += 1
     else:
