@@ -97,15 +97,14 @@ for f_record, r_record in zip(f_file, r_file):
                     raw_barcode_2 = lintag2_grep.group()
                     lintag1_start = lintag1_f_clipper.match(raw_barcode_1)
                     lintag1_end = lintag1_r_clipper.search(raw_barcode_1[::-1])
-#                    lintag1_end = -lintag1_r_clipper.search(raw_barcode_1[::-1]).end() + 1
                     lintag2_start = lintag2_f_clipper.match(raw_barcode_2)
                     lintag2_end = lintag2_r_clipper.search(raw_barcode_2[::-1])
+                    # add this if condition to check whether clipper regex search is fine
                     if lintag1_start is not None and lintag1_end is not None and lintag2_start is not None and lintag2_end is not None:
                         lintag1_start_pos = lintag1_start.end()
                         lintag1_end_pos = -lintag1_end.end()
                         lintag2_start_pos = lintag2_start.end()
                         lintag2_end_pos = -lintag2_end.end()
-#                    lintag2_end = -lintag2_r_clipper.search(raw_barcode_2[::-1]).end() + 1
                         trimmed_lintag1 = raw_barcode_1[lintag1_start_pos:lintag1_end_pos]
                         trimmed_lintag2 = raw_barcode_2[lintag2_start_pos:lintag2_end_pos]
                         vars()[multitag_dict[k] + '_lintag1'].write(trimmed_lintag1 + '\n')
