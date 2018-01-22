@@ -53,10 +53,10 @@ lintag2_r_clipper = re.compile('\D*?(CAT.|CA.T|C.TT|.ATT)')
 #define some boundaries
 seqtag_pos = 0
 f_multitag_pos = 8
-f_barcode_pos = 59
+f_barcode_pos = 57
 r_multitag_pos = 8
-r_barcode_pos = 45
-barcode_length = 34
+r_barcode_pos = 43
+barcode_length = 38
 
 # Minimum quality score
 min_qs = 30
@@ -85,7 +85,7 @@ for f_record, r_record in zip(f_file, r_file):
     #After trial, checking barcode pattern is preferred
     if lintag1_grep is not None and lintag2_grep is not None:
         bar_pattern_counts += 1
-        if np.mean(fq[lintag1_grep.start() : lintag1_grep.end()]) >= min_qs and np.mean(rq[lintag2_grep.start() : lintag2_grep.end()]) > min_qs:
+        if np.mean(fq[lintag1_grep.start() + f_barcode_pos : lintag1_grep.end() + f_barcode_pos]) >= min_qs and np.mean(rq[lintag2_grep.start() + r_barcode_pos : lintag2_grep.end() + r_barcode_pos]) > min_qs:
             bar_pattern_quality_counts += 1
             for k, v in re_dict.items():
                 f_grep = v[0].match(fr[f_multitag_pos:])
@@ -110,8 +110,8 @@ for f_record, r_record in zip(f_file, r_file):
                         vars()[multitag_dict[k] + '_lintag1'].write(trimmed_lintag1 + '\n')
                         vars()[multitag_dict[k] + '_lintag2'].write(trimmed_lintag2 + '\n')
                         vars()[multitag_dict[k] + '_multitag'].write(f_grep.group() +  r_grep.group() + '\n')
-                        vars()[multitag_dict[k] + '_lintag1_umi'].write(lintag1_grep.group() + "," + fr[0:f_multitag_pos] + rr[0:r_multitag_pos] + '\n')
-                        vars()[multitag_dict[k] + '_lintag2_umi'].write(lintag1_grep.group() + "," + fr[0:f_multitag_pos] + rr[0:r_multitag_pos] + '\n')
+                        vars()[multitag_dict[k] + '_lintag1_umi'].write(trimmed_lintag1 + "," + fr[0:f_multitag_pos] + rr[0:r_multitag_pos] + '\n')
+                        vars()[multitag_dict[k] + '_lintag2_umi'].write(trimmed_lintag2 + "," + fr[0:f_multitag_pos] + rr[0:r_multitag_pos] + '\n')
                         vars()[multitag_dict[k] + '_seqtag'].write(fr[0:f_multitag_pos] + rr[0:r_multitag_pos] + '\n')
                         break
                     else:
@@ -141,8 +141,8 @@ r_file.close()
 
 # run bartender to cluster the barcodes
 #for i in multitag:
-#    os.system("bartender_single_com -f " + i + "_lintag1.txt -c 2 -t 8 -d 2 -o " + i + "_bartender_lintag1_stdout" )
-#    os.system("bartender_single_com -f " + i + "_lintag2.txt -c 2 -t 8 -d 2 -o " + i + "_bartender_lintag2_stdout")
+#    os.system("bartender_single_com -f " + i + "_lintag1_umi.txt -c 2 -t 8 -d 2 -o " + i + "_bartender_lintag1" )
+#    os.system("bartender_single_com -f " + i + "_lintag2_umi.txt -c 2 -t 8 -d 2 -o " + i + "_bartender_lintag2")
 
 
 
