@@ -59,7 +59,7 @@ r_barcode_pos = 43
 barcode_length = 38
 
 # Minimum quality score
-min_qs = 30
+min_qs = 29
 
 #define several important counters
 bar_pattern_counts = 0
