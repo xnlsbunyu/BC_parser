@@ -70,15 +70,21 @@ def barcode_filter_generator(handle, read_direction):
             continue
     print (count)
     raise StopIteration
+# Build two separate dictionaries with line number as key and quality matching read as value
+# What if the fastq file is very big, not sure the size limit for dictionary
+# I need to optimize the dictionary, empty the dictionaries maybe every 100000 reads
 bc1_dict = {}
 bc2_dict = {}
 for t, s, q, c in barcode_filter_generator(open("small_f.fastq", "r"), "f"):
     bc1_dict[c] = s
 for t, s, q, c in barcode_filter_generator(open("small_r.fastq", "r"), "r"):
     bc2_dict[c] = s
+# find common key and sorted
 dbc_keys = sorted(list(bc1_dict.keys() & bc2_dict.keys()))
+# open files to write quality matching reads
 vars()["f_bc.txt"] = open("f_bc.txt", "w")
 vars()["r_bc.txt"] = open("r_bc.txt", "w")
+# write reads into files in sorted order
 for i in dbc_keys:
     vars()["f_bc.txt"].write(bc1_dict[i] + '\n')
     vars()["r_bc.txt"].write(bc2_dict[i] + '\n')
