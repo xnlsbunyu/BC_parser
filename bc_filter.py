@@ -4,10 +4,13 @@ def barcode_filter_generator(handle, read_direction):
     import numpy as np
     lintag1_re = re.compile('\D*?(.ACC|T.CC|TA.C|TAC.)\D{4,7}?AA\D{4,7}?TT\D{4,7}?TT\D{4,7}?(.TAA|A.AA|AT.A|ATA.)\D*')
     lintag2_re = re.compile('\D*?(.ACC|T.CC|TA.C|TAC.)\D{4,7}?AA\D{4,7}?AA\D{4,7}?TT\D{4,7}?(.TAC|T.AC|TT.C|TTA.)\D*')
+    bc_len = 38
     if read_direction == "f":
         bc_filter = lintag1_re
+        bc_pos = 57
     elif read_direction == "r":
         bc_filter = lintag2_re
+        bc_pos = 43
     count = 0
     handle_readline = handle.readline
     while True:
@@ -20,6 +23,7 @@ def barcode_filter_generator(handle, read_direction):
             raise ValueError ("Is this handle in binary mode not text mode")
 
     while line:
+        count += 1
         if line[0] != "@":
             raise ValueError(
                     "Records in Fastq files should start with '@' character"
@@ -53,19 +57,34 @@ def barcode_filter_generator(handle, read_direction):
             raise ValueError("Lengths of sequence and quality values differs "
                                 " for %s (%i and %i)."
                                 % (title_line, seq_len, len(quality_string)))
-        bc_grep = bc_filter.match(seq_string[57:57+38])
+        bc_grep = bc_filter.match(seq_string[bc_pos:bc_pos+bc_len])
 
         if bc_grep != None:
-            quality_score = np.fromstring(quality_string[bc_grep.start() + 57: bc_grep.end() + 57], np.int8)-33
+            quality_score = np.fromstring(quality_string[bc_grep.start() + bc_pos: bc_grep.end() + bc_pos], np.int8)-33
             if np.mean(quality_score) >= 30:
-                count += 1
-                yield (title_line, seq_string, quality_string)
+#                count += 1
+                yield (title_line, seq_string, quality_string, count)
             else:
                 continue
         else:
             continue
     print (count)
     raise StopIteration
+bc1_dict = {}
+bc2_dict = {}
+for t, s, q, c in barcode_filter_generator(open("small_f.fastq", "r"), "f"):
+    bc1_dict[c] = s
+for t, s, q, c in barcode_filter_generator(open("small_r.fastq", "r"), "r"):
+    bc2_dict[c] = s
+dbc_keys = sorted(list(bc1_dict.keys() & bc2_dict.keys()))
+vars()["f_bc.txt"] = open("f_bc.txt", "w")
+vars()["r_bc.txt"] = open("r_bc.txt", "w")
+for i in dbc_keys:
+    vars()["f_bc.txt"].write(bc1_dict[i] + '\n')
+    vars()["r_bc.txt"].write(bc2_dict[i] + '\n')
+vars()["f_bc.txt"].close()
+vars()["r_bc.txt"].close()
+#bc1 = barcode_filter_generator(open("small_f.fastq", "r"), "f")
+#bc2 = barcode_filter_generator(open("small_r.fastq", "r"), "r")
+#for (t1, s1, q1), (t2, s2, q2) in zip(bc1, bc2):
 
-for t, s, q in barcode_filter_generator(open("small_f.fastq", "r"), "f"):
-    print (s)
