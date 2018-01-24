@@ -55,7 +55,7 @@ def barcode_filter_generator(handle, read_direction):
                                 % (title_line, seq_len, len(quality_string)))
         bc_grep = bc_filter.match(seq_string[57:57+38])
 
-        if lintag1_grep != None:
+        if bc_grep != None:
             quality_score = np.fromstring(quality_string[bc_grep.start() + 57: bc_grep.end() + 57], np.int8)-33
             if np.mean(quality_score) >= 30:
                 count += 1
@@ -67,5 +67,5 @@ def barcode_filter_generator(handle, read_direction):
     print (count)
     raise StopIteration
 
-for t, s, q in barcode_filter_generator(open("small_f.fastq", "r")):
+for t, s, q in barcode_filter_generator(open("small_f.fastq", "r"), "f"):
     print (s)
