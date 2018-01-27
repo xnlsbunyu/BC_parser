@@ -27,22 +27,25 @@ def barcode_filter_generator(handle, read_direction):
     import numpy as np
     lintag1_re = re.compile('\D*?(.ACC|T.CC|TA.C|TAC.)\D{4,7}?AA\D{4,7}?TT\D{4,7}?TT\D{4,7}?(.TAA|A.AA|AT.A|ATA.)\D*')
     lintag2_re = re.compile('\D*?(.ACC|T.CC|TA.C|TAC.)\D{4,7}?AA\D{4,7}?AA\D{4,7}?TT\D{4,7}?(.TAC|T.AC|TT.C|TTA.)\D*')
+    f_clipper = re.compile('\D*?(.ACC|T.CC|TA.C|TAC.)') 
     bc_len = 38
     multitag_pos = 8
-    multitag = ['GCTTGACTTCTC','CAAGAAAGGGTT', 'ATGCGAGGCGTCC', 'CATAGGGTATTG', 'TTTTTGGCGCGC', 'TGGAAGGCACTC', 'CCGGGCTGTTTG', 'CTACTCCCTGCA', 'AGTGATGATCTG', 'TTCGGTGCTTAA']
+    multitag = ['GCTTGACTTCTC','CAAGAAAGGGTT', 'ATGCGAGGCGTC', 'CATAGGGTATTG', 'TTTTTGGCGCGC', 'TGGAAGGCACTC', 'CCGGGCTGTTTG', 'CTACTCCCTGCA', 'AGTGATGATCTG', 'TTCGGTGCTTAA']
     
     # forward multitag big regex
-    f_multitag = [i[0:6] for i in multitag]
+    f_multi = [i[0:6] for i in multitag]
     # reverse multitag big regex
-    r_multitag = [i[6:] for i in multitag]
+    r_multi = [i[6:] for i in multitag]
     if read_direction == "f":
         bc_filter = lintag1_re
+        r_clipper = re.compile('\D*?(AAT.|AA.A|A.TA|.ATA)')
         bc_pos = 57
-        multitag_filter = get_full_re(f_multitag)
+        multitag_filter = get_full_re(f_multi)
     elif read_direction == "r":
         bc_filter = lintag2_re
+        r_clipper = re.compile('\D*?(CAT.|CA.T|C.TT|.ATT)')
         bc_pos = 43
-        multitag_filter = get_full_re(r_multitag)
+        multitag_filter = get_full_re(r_multi)
     count = 0
     handle_readline = handle.readline
     while True:
@@ -94,8 +97,10 @@ def barcode_filter_generator(handle, read_direction):
         if bc_grep != None and multitag_grep != None:
             quality_score = np.fromstring(quality_string[bc_grep.start() + bc_pos: bc_grep.end() + bc_pos], np.int8)-33
             if np.mean(quality_score) >= 29:
-#                count += 1
-                yield (multitag_grep.group(), bc_grep.group(), seq_string[0:8], count)
+                raw_bc = bc_grep.group()
+                bc_start = f_clipper.match(raw_bc).end()
+                bc_end = r_clipper.search(raw_bc[::-1]).end()*(-1)
+                yield (multitag_grep.group(), bc_grep.group()[bc_start:bc_end], seq_string[0:8], count)
             else:
                 continue
         else:
@@ -111,12 +116,13 @@ def barcode_filter_generator(handle, read_direction):
 bc1_dict = {}
 bc2_dict = {}
 # open files to write quality matching reads
-vars()["f_bc.txt"] = open("f_bc.txt", "w")
-vars()["r_bc.txt"] = open("r_bc.txt", "w")
-vars()["f_multitag"] = open("f_multitag.txt", "w")
-vars()["r_multitag"] = open("r_multitag.txt", "w")
-vars()["f_umi"] = open("f_umi.txt", "w")
-vars()["r_umi"] = open("r_umi.txt", "w")
+#vars()["f_bc"] = open("f_bc.txt", "w")
+#vars()["r_bc"] = open("r_bc.txt", "w")
+#vars()["f_multitag"] = open("f_multitag.txt", "w")
+#vars()["r_multitag"] = open("r_multitag.txt", "w")
+#vars()["f_umi"] = open("f_umi.txt", "w")
+#vars()["r_umi"] = open("r_umi.txt", "w")
+vars()["everything"] = open("everything", "w")
 for (m1, bc1, umi1, c1), (m2, bc2, umi2, c2) in zip(barcode_filter_generator(open("small_f.fastq", "r"), "f"), 
         barcode_filter_generator(open("small_r.fastq", "r"), "r")):
     bc1_dict[c1], bc2_dict[c2] = [m1, bc1, umi1], [m2, bc2, umi2] 
@@ -124,17 +130,26 @@ for (m1, bc1, umi1, c1), (m2, bc2, umi2, c2) in zip(barcode_filter_generator(ope
 # find common key and sorted
 dbc_keys = sorted(list(bc1_dict.keys() & bc2_dict.keys()))
 
-# write reads into files in sorted order
-for i in dbc_keys:
-    vars()["f_bc.txt"].write(bc1_dict[i][1] + '\n')
-    vars()["r_bc.txt"].write(bc2_dict[i][1] + '\n')
-    vars()["f_multitag"].write(bc1_dict[i][0] + '\n')
-    vars()["r_multitag"].write(bc2_dict[i][0] + '\n')
-    vars()["f_umi"].write(bc1_dict[i][2] + '\n')
-    vars()["r_umi"].write(bc2_dict[i][2] + '\n')
-vars()["f_bc.txt"].close()
-vars()["r_bc.txt"].close()
-vars()["f_multitag"].close()
-vars()["r_multitag"].close()
-vars()["f_umi"].close()
-vars()["r_umi"].close()
+every_list = [bc1_dict[i][0] + " " + bc2_dict[i][0] + " " + bc1_dict[i][1] + " " + bc2_dict[i][1] + " " + bc1_dict[i][2]+bc2_dict[i][2] + "\n" for i in dbc_keys]
+vars()["everything"].writelines(every_list)
+#f_bc_list = [bc1_dict[i][1] + "\n" for i in dbc_keys] 
+#r_bc_list = [bc2_dict[i][1] + "\n" for i in dbc_keys]
+#f_multi_list = [bc1_dict[i][0] + "\n" for i in dbc_keys]
+#r_multi_list = [bc2_dict[i][0] + "\n" for i in dbc_keys]
+#f_umi_list = [bc1_dict[i][2] + "\n" for i in dbc_keys]
+#r_umi_list = [bc2_dict[i][2] + "\n" for i in dbc_keys]
+
+
+vars()["everything"].close()
+#vars()["f_bc"].writelines(f_bc_list)
+#vars()["f_bc"].close()
+#vars()["r_bc"].writelines(r_bc_list)
+#vars()["r_bc"].close()
+#vars()["f_multitag"].writelines(f_multi_list)
+#vars()["f_multitag"].close()
+#vars()["r_multitag"].writelines(r_multi_list)
+#vars()["r_multitag"].close()
+#vars()["f_umi"].writelines(f_umi_list)
+#vars()["f_umi"].close()
+#vars()["r_umi"].writelines(r_umi_list)
+#vars()["r_umi"].close()
