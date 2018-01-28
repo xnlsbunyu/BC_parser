@@ -130,7 +130,7 @@ for (m1, bc1, umi1, c1), (m2, bc2, umi2, c2) in zip(barcode_filter_generator(ope
 # find common key and sorted
 dbc_keys = sorted(list(bc1_dict.keys() & bc2_dict.keys()))
 
-every_list = [bc1_dict[i][0] + " " + bc2_dict[i][0] + " " + bc1_dict[i][1] + " " + bc2_dict[i][1] + " " + bc1_dict[i][2]+bc2_dict[i][2] + "\n" for i in dbc_keys]
+every_list = ["@" + bc1_dict[i][0] + "" + bc2_dict[i][0] + "@\n" + bc1_dict[i][1] + " " + bc2_dict[i][1] + "\n" + bc1_dict[i][2]+bc2_dict[i][2] + "\n" for i in dbc_keys]
 vars()["everything"].writelines(every_list)
 #f_bc_list = [bc1_dict[i][1] + "\n" for i in dbc_keys] 
 #r_bc_list = [bc2_dict[i][1] + "\n" for i in dbc_keys]
@@ -153,3 +153,5 @@ vars()["everything"].close()
 #vars()["f_umi"].close()
 #vars()["r_umi"].writelines(r_umi_list)
 #vars()["r_umi"].close()
+
+
