@@ -115,13 +115,13 @@ def barcode_filter_generator(handle, read_direction):
 # I need to optimize the dictionary, empty the dictionaries maybe every 100000 reads
 bc1_dict = {}
 bc2_dict = {}
-# open files to write quality matching reads
-#vars()["f_bc"] = open("f_bc.txt", "w")
-#vars()["r_bc"] = open("r_bc.txt", "w")
-#vars()["f_multitag"] = open("f_multitag.txt", "w")
-#vars()["r_multitag"] = open("r_multitag.txt", "w")
-#vars()["f_umi"] = open("f_umi.txt", "w")
-#vars()["r_umi"] = open("r_umi.txt", "w")
+multitag = ['GCTTGACTTCTC','CAAGAAAGGGTT', 'ATGCGAGGCGTC', 'CATAGGGTATTG', 'TTTTTGGCGCGC', 'TGGAAGGCACTC', 'CCGGGCTGTTTG', 'CTACTCCCTGCA', 'AGTGATGATCTG', 'TTCGGTGCTTAA']
+multitag_f_dict = {}
+multitag_r_dict = {}
+for i in multitag:
+    multitag_f_dict[i[0:6]] = get_full_re(i[0:6])
+    multitag_r_dict[i[6:]] = get_full_re(i[6:])
+
 vars()["everything"] = open("everything", "w")
 for (m1, bc1, umi1, c1), (m2, bc2, umi2, c2) in zip(barcode_filter_generator(open("small_f.fastq", "r"), "f"), 
         barcode_filter_generator(open("small_r.fastq", "r"), "r")):
@@ -130,28 +130,7 @@ for (m1, bc1, umi1, c1), (m2, bc2, umi2, c2) in zip(barcode_filter_generator(ope
 # find common key and sorted
 dbc_keys = sorted(list(bc1_dict.keys() & bc2_dict.keys()))
 
-every_list = ["@" + bc1_dict[i][0] + "" + bc2_dict[i][0] + "@\n" + bc1_dict[i][1] + " " + bc2_dict[i][1] + "\n" + bc1_dict[i][2]+bc2_dict[i][2] + "\n" for i in dbc_keys]
+every_list = ["@" + bc1_dict[i][0] + "," + bc1_dict[i][1] + "," + bc2_dict[i][1] + "," + bc1_dict[i][2]+bc2_dict[i][2] + "," + bc2_dict[i][0] + "@\n" for i in dbc_keys]
 vars()["everything"].writelines(every_list)
-#f_bc_list = [bc1_dict[i][1] + "\n" for i in dbc_keys] 
-#r_bc_list = [bc2_dict[i][1] + "\n" for i in dbc_keys]
-#f_multi_list = [bc1_dict[i][0] + "\n" for i in dbc_keys]
-#r_multi_list = [bc2_dict[i][0] + "\n" for i in dbc_keys]
-#f_umi_list = [bc1_dict[i][2] + "\n" for i in dbc_keys]
-#r_umi_list = [bc2_dict[i][2] + "\n" for i in dbc_keys]
-
-
 vars()["everything"].close()
-#vars()["f_bc"].writelines(f_bc_list)
-#vars()["f_bc"].close()
-#vars()["r_bc"].writelines(r_bc_list)
-#vars()["r_bc"].close()
-#vars()["f_multitag"].writelines(f_multi_list)
-#vars()["f_multitag"].close()
-#vars()["r_multitag"].writelines(r_multi_list)
-#vars()["r_multitag"].close()
-#vars()["f_umi"].writelines(f_umi_list)
-#vars()["f_umi"].close()
-#vars()["r_umi"].writelines(r_umi_list)
-#vars()["r_umi"].close()
-
 
