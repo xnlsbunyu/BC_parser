@@ -1,30 +1,10 @@
-#Define a function to generate all possible regex with allowed number of mismatches
-def mismatch_re(s, mis):
-    import itertools
-    import re
-    all_list_f = []
-    all_list_r = []
-    mismatch_pos = itertools.combinations(range(6), mis)
-    for i in mismatch_pos:
-        temp_s_f, temp_s_r = s[0:6], s[6:]
-        for pos in i:
-            temp_s_f = "".join((temp_s_f[:pos], ".", temp_s_f[pos+1:]))
-            temp_s_r = "".join((temp_s_r[:pos], ".", temp_s_r[pos+1:]))
-            all_list_f.append("^@" + temp_s_f)
-            all_list_r.append(temp_s_r + "@$")
-    return (re.compile('|'.join(all_list_f)),re.compile('|'.join(all_list_r)))
-#    with open(s[0:6] + "_re.txt", "w") as f:
-#        f.writelines(''.join(all_list_f))
-#    f.close()
-#    with open(s[6:] + "_re.txt", "w") as r:
-#        r.writelines(''.join(all_list_r))
-#    r.close()
-
+import re
+from regex_tools import mismatch_re
 multitag = ['GCTTGACTTCTC','CAAGAAAGGGTT', 'ATGCGAGGCGTC', 'CATAGGGTATTG', 'TTTTTGGCGCGC', 'TGGAAGGCACTC', 'CCGGGCTGTTTG', 'CTACTCCCTGCA', 'AGTGATGATCTG', 'TTCGGTGCTTAA']
 multitag_f_dict = {}
 multitag_r_dict = {}
 for i in multitag:
-    multitag_f_dict[i[0:6]], multitag_r_dict[i[6:]] = mismatch_re(i, 2)
+    multitag_f_dict[i[0:6]], multitag_r_dict[i[6:]] = re.compile(mismatch_re(i[0:6], 2, "^@", "")), re.compile(mismatch_re(i[6:], 2, "", "@$"))
 
 for i in multitag:
     vars()[i + "_lintag1"] = open(i + "_lintag1.txt", "w")
