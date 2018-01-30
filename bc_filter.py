@@ -121,16 +121,43 @@ multitag_r_dict = {}
 for i in multitag:
     multitag_f_dict[i[0:6]] = get_full_re(i[0:6])
     multitag_r_dict[i[6:]] = get_full_re(i[6:])
+iteration = 1
 
-vars()["everything"] = open("everything", "w")
+#open the file for writing everything 
+vars()["everything_test"] = open("everything_test.txt", "w")
 for (m1, bc1, umi1, c1), (m2, bc2, umi2, c2) in zip(barcode_filter_generator(open("small_f.fastq", "r"), "f"), 
         barcode_filter_generator(open("small_r.fastq", "r"), "r")):
-    bc1_dict[c1], bc2_dict[c2] = [m1, bc1, umi1], [m2, bc2, umi2] 
+    bc1_dict[c1], bc2_dict[c2] = [m1, bc1, umi1], [m2, bc2, umi2]
+    # set the buffer size when the dictionary size is too big, compare two dicts and write into everything file
+    # use the line number as the filter, maybe use the length of the dictionary will be more reasonable
+    if max(c1, c2) >10000*iteration: # every 10000 lines in the fastq parser
+        #open everything file and write as append mode
+        vars()["everything_test"] = open("everything_test.txt", "a")
+        # get the common keys in these two dicts
+        dbc_keys = sorted(list(bc1_dict.keys() & bc2_dict.keys()))
+        # format for each line
+        # Start with "@", following forward multitag, "," lintag1, ",", lintag2, "," , contatenated seqtag, reverse multitag ending with "@" and newline
+        every_list = ["@" + bc1_dict[i][0] + "," + bc1_dict[i][1] + "," + bc2_dict[i][1] + "," + bc1_dict[i][2]+bc2_dict[i][2] + "," + bc2_dict[i][0] + "@\n" for i in dbc_keys]
+        # write the whole list of lines at once into everything, avoid calling write function millions of times
+        vars()["everything_test"].writelines(every_list)
+        # This is avoiding missing records due to the fact that the keys of two dictionaries are not always paired
+        if c1 > c2:
+            bc1_dict = {k:v for k, v in bc1_dict.items() if k > c2}
+            bc2_dict = {}
+        elif c1 < c2:
+            bc1_dict = {}
+            bc2_dict = {k:v for k, v in bc2_dict.items() if k > c1}
+        else:
+            bc1_dict = {}
+            bc2_dict = {}
+        iteration += 1
+    else:
+        continue
 
-# find common key and sorted
+# write the remaining contents of dictionaries into the file
 dbc_keys = sorted(list(bc1_dict.keys() & bc2_dict.keys()))
-
+#
 every_list = ["@" + bc1_dict[i][0] + "," + bc1_dict[i][1] + "," + bc2_dict[i][1] + "," + bc1_dict[i][2]+bc2_dict[i][2] + "," + bc2_dict[i][0] + "@\n" for i in dbc_keys]
-vars()["everything"].writelines(every_list)
-vars()["everything"].close()
+vars()["everything_test"].writelines(every_list)
+vars()["everything_test"].close()
 
