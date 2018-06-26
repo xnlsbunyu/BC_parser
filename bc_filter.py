@@ -18,15 +18,15 @@ def barcode_recorder(forward, reverse, multitag):
     iteration = 1
 
     #open the file for writing everything 
-    vars()["everything_test"] = open("everything_test.txt", "w")
-    for (m1, bc1, umi1, c1), (m2, bc2, umi2, c2) in zip(barcode_filter_generator(gzip.open("small_f.fastq.gz", "rt"), "f", multitag), 
-            barcode_filter_generator(gzip.open("small_r.fastq.gz", "rt"), "r", multitag)):
+    vars()["everything_test"] = open(output + ".txt", "w")
+    for (m1, bc1, umi1, c1), (m2, bc2, umi2, c2) in zip(barcode_filter_generator(gzip.open(forward, "rt"), "f", multitag), 
+            barcode_filter_generator(gzip.open(reverse, "rt"), "r", multitag)):
         bc1_dict[c1], bc2_dict[c2] = [m1, bc1, umi1], [m2, bc2, umi2]
         # set the buffer size when the dictionary size is too big, compare two dicts and write into everything file
         # use the line number as the filter, maybe use the length of the dictionary will be more reasonable
         if max(c1, c2) >10000*iteration: # every 10000 lines in the fastq parser
             #open everything file and write as append mode
-            vars()["everything_test"] = open("everything_test.txt", "a")
+            vars()["everything_test"] = open(output + ".txt", "a")
             # get the common keys in these two dicts
             dbc_keys = sorted(list(bc1_dict.keys() & bc2_dict.keys()))
             # format for each line
