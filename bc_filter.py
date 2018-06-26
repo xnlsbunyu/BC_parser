@@ -5,7 +5,7 @@ from barcode_filter_generator import barcode_filter_generator
 # Build two separate dictionaries with line number as key and quality matching read as value
 # What if the fastq file is very big, not sure the size limit for dictionary
 # I need to optimize the dictionary, empty the dictionaries maybe every 100000 reads
-def barcode_recorder(forward, reverse, multitag):
+def barcode_recorder(forward, reverse, multitag, output):
     import gzip
     bc1_dict = {}
     bc2_dict = {}
